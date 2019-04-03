@@ -1,0 +1,93 @@
+<html>
+  <head>
+    <title>Lowell Teacher Lookup</title>
+    <link rel="stylesheet" href="./style.css">
+    </link>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  </head>
+
+  <body>
+    <div class="background"></div>
+    <h1 class="outline" style="font-weight: bold; font-size: 64;">Lowell Teacher Lookup</h1>
+    <div class="loader" id="loader"></div>
+    <br>
+    <div class="boxcontainer">
+      <div id="teacherSearchBox" class="box">
+        <h3 style="margin-top:0px;">Teacher Search</h3>
+        <input id="teacherLastName" type="text" name="teacherLastName" autocomplete="off" /> Last Name
+        <br>
+        <select id="departmentSelect">
+        </select>
+        <br>
+      </div>
+    </div>
+    <div class="boxcontainer">
+      <div id="teacherSearchResultsBox" class="box">
+
+      </div>
+    </div>
+  </body>
+  <script>
+  var departmentNumber = 0
+  var teacherName = ""
+
+  $(async function() {
+    $("#loader").css("visibility","hidden")
+    var teacherNameEdited = function(event) {
+      var teacherNameTmp = $('#teacherLastName').val()
+      if (teacherName != teacherNameTmp && teacherNameTmp != "")
+        searchClasses()
+      teacherName = teacherNameTmp
+    }
+    $('#teacherLastName').keyup(teacherNameEdited)
+
+    await getDepartments()
+  })
+
+  function getJSON(dataSource, arguments, callback)
+  {
+    $("#loader").css("visibility","")
+    $.getJSON(dataSource, arguments, function(data)
+    {
+      $("#loader").css("visibility","hidden")
+      callback(data)
+    })
+  }
+
+  function getDepartments()
+  {
+    var getDepartmentsPromise = new Promise(function(resolve, reject) {
+      getJSON("https://scheduledata2.herokuapp.com/query", {"table":"departments"}, function(data) {
+        console.log(data)
+        for (dataNum in data)
+        {
+          $("#departmentSelect").append("<option value=" + data[dataNum].departmentnumber + ">" + data[dataNum].departmenttitle + "</option><br>")
+        }
+        $("#departmentSelect").on('change', function() {
+          departmentNumber = $("#departmentSelect").val()
+          searchClasses()
+        })
+        departmentNumber = $("#departmentSelect").val()
+        resolve()
+      })
+    })
+    return getDepartmentsPromise
+  }
+
+  function searchClasses()
+  {
+    var teacherLastName = $("#teacherLastName").val()
+    getJSON("https://scheduledata2.herokuapp.com/query", {"table":"blocks", "where":"teacher ~* '^" + teacherLastName + "' and coursecode in (select coursecode from courses where departmentnumber='" + departmentNumber + "')", "order":"teacher asc, blocknumber asc"}, function(data) {
+      console.log(data)
+      $("#teacherSearchResultsBox").empty()
+      $("#teacherSearchResultsBox").append("<h3 style='margin-top:0px;'>Classes</h3><h4>")
+      for (classNum in data)
+      {
+        $("#teacherSearchResultsBox").append(data[classNum].teacher + " - Block " + data[classNum].blocknumber + " - " + data[classNum].coursecode + "<br>")
+      }
+      $("#teacherSearchResultsBox").append("</h4>")
+    })
+  }
+  </script>
+</html>
