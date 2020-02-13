@@ -84,7 +84,7 @@
       $("#teacherSearchResultsBox").append("<h3 style='margin-top:0px;'>Classes</h3><h4>")
       for (classNum in data)
       {
-        $("#teacherSearchResultsBox").append(data[classNum].teacher + " - Block " + data[classNum].blocknumber + " - " + data[classNum].coursecode + "<br>")
+        $("#teacherSearchResultsBox").append(data[classNum].teacher + " - Block " + data[classNum].blocknumber + " / " + data[classNum].roomnumber + " - " + data[classNum].coursecode + "<br>")
       }
       $("#teacherSearchResultsBox").append("</h4>")
     })
